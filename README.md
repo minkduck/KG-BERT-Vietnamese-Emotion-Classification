@@ -107,7 +107,6 @@ The experimental pipeline is organized into **5 evaluation groups**:
 ```bash
 # Clone the repository
 git clone https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification.git
-cd KG-BERT-Vietnamese-Emotion-Classification
 
 # Create and activate virtual environment
 python -m venv .venv
