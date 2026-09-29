@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software or ontology resource, please cite it as below."
+title: "An Explainable Neuro-Symbolic PhoBERT–Ontology Framework for Vietnamese Emotion Classification"
+authors:
+  - family-names: "Huynh"
+    given-names: "Minh-Duc"
+    email: "huynhmduc2001@gmail.com"
+    affiliation: "Department of Information Technology, Nha Trang University"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+  - family-names: "Pham"
+    given-names: "Thi-Thu-Thuy"
+    affiliation: "Department of Information Technology, Nha Trang University"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+date-released: 2026-09-25
+url: "https://github.com/[username]/[repo-name]"
+repository-code: "https://github.com/[username]/[repo-name]"
+keywords:
+  - natural language processing
+  - sentiment analysis
+  - emotion recognition
+  - knowledge graph
+  - ontology
+  - neuro-symbolic AI
+  - explainable NLP
+  - vietnamese nlp
+  - phobert
+  - visobert

@@ -1,0 +1,34 @@
+# Configuration for UIT-VSMEC Dataset (7-class Emotion Classification)
+dataset:
+  name: "UIT-VSMEC"
+  task: "emotion"
+  num_classes: 7
+  data_dir: "data/vsmec"
+  classes:
+    - "Anger"
+    - "Disgust"
+    - "Fear"
+    - "Happiness"
+    - "Neutral"
+    - "Sadness"
+    - "Surprise"
+
+ontology:
+  rdf_path: "ontology/ekman_appraisal_ontology.rdf"
+  default_conf: 0.85
+  manual_boost: 1.2
+  negation_attenuation: 0.5
+  alpha_similarity: 0.2
+
+seeds:
+  phobert_fusion: 1234
+  visobert_fusion: 42
+  lexicon_vs_ontology: 42
+  final_comparison: 2025
+
+training:
+  batch_size: 32
+  learning_rate: 2.0e-5
+  epochs: 15
+  patience: 3
+  max_len: 128

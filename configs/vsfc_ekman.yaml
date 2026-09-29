@@ -1,0 +1,34 @@
+# Configuration for VSFC-Ekman Dataset (7-class Ekman Emotion Classification derived from VSFC)
+dataset:
+  name: "VSFC-Ekman"
+  task: "emotion"
+  num_classes: 7
+  data_dir: "data/vsfc-ekman"
+  classes:
+    - "Anger"
+    - "Disgust"
+    - "Fear"
+    - "Happiness"
+    - "Neutral"
+    - "Sadness"
+    - "Surprise"
+
+ontology:
+  rdf_path: "ontology/ekman_appraisal_ontology.rdf"
+  default_conf: 0.85
+  manual_boost: 1.2
+  negation_attenuation: 0.5
+  alpha_similarity: 0.2
+
+seeds:
+  phobert_fusion: 0
+  visobert_fusion: 2025
+  lexicon_vs_ontology: 1234
+  final_comparison: 42
+
+training:
+  batch_size: 32
+  learning_rate: 2.0e-5
+  epochs: 15
+  patience: 3
+  max_len: 128

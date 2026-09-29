@@ -1,0 +1,30 @@
+# Configuration for UIT-VSFC Dataset (3-class Sentiment Analysis: Negative=0, Neutral=1, Positive=2)
+dataset:
+  name: "UIT-VSFC"
+  task: "sentiment"
+  num_classes: 3
+  data_dir: "data/vsfc"
+  label_mapping:
+    0: "Negative"
+    1: "Neutral"
+    2: "Positive"
+
+ontology:
+  rdf_path: "ontology/ekman_appraisal_ontology.rdf"
+  default_conf: 0.9
+  manual_boost: null # Not used in VSFC sentiment task
+  negation_attenuation: 0.4
+  alpha_similarity: 0.2
+
+seeds:
+  phobert_fusion: 123
+  visobert_fusion: 2025
+  lexicon_vs_ontology: 42
+  final_comparison: 1234
+
+training:
+  batch_size: 32
+  learning_rate: 2.0e-5
+  epochs: 15
+  patience: 3
+  max_len: 128
