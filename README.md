@@ -5,7 +5,7 @@ Under review at the Journal of Intelligent Information Systems.
 
 ---
 
-## 📌 Overview & Experiment Groups
+## Overview & Experiment Groups
 
 This repository provides the official source code and ontology resources for our neuro-symbolic framework for Vietnamese emotion classification.
 
@@ -23,7 +23,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## 🗺️ Paper ↔ Code Mapping Table
+## Paper ↔ Code Mapping Table
 
 | Paper Section / Table / Fig | Experiment / Concept | Notebook Path | Model Class / Flags | Associated Config |
 | :--- | :--- | :--- | :--- | :--- |
@@ -37,7 +37,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```
 .
@@ -95,7 +95,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 ### 1. Hardware & Environment
 - Experiments were run on Kaggle notebooks with 2x NVIDIA T4 GPUs.
@@ -120,7 +120,7 @@ pip install -r requirements.txt
 
 ---
 
-## 📊 Ontology Hyper-Parameters, Random Seeds & Significance Testing
+## Ontology Hyper-Parameters, Random Seeds & Significance Testing
 
 ### Hyper-Parameters & Single Committed Run Seeds
 The exact ontology vectorizer hyper-parameters and example single-run seeds are preserved in `configs/*.yaml`:
@@ -143,7 +143,7 @@ The exact ontology vectorizer hyper-parameters and example single-run seeds are 
 
 ---
 
-## 🌌 Ontology Knowledge Graph Release
+## Ontology Knowledge Graph Release
 
 The repository includes `ontology/ekman_appraisal_ontology.rdf`:
 - **Triple Count:** **91,005** triples
@@ -155,6 +155,6 @@ The repository includes `ontology/ekman_appraisal_ontology.rdf`:
 
 ---
 
-## 🔒 Code Availability
+## Code Availability
 
 Source code and ontology resources: https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification

@@ -4,14 +4,14 @@ This directory contains result documentation and tools for aggregating experimen
 
 ---
 
-## 📌 Reproducibility & Archived Logs Notice
+## Reproducibility & Archived Logs Notice
 
 > **Important Notice on Run Logs:**  
 > Per-seed run logs were not archived, so the tables in the paper cannot be recomputed from this repository; the code, configurations and seeds needed to re-run every experiment are provided here.
 
 ---
 
-## 📂 Mapping Notebooks to Paper Tables & Figures
+## Mapping Notebooks to Paper Tables & Figures
 
 | Notebook Path | Feeds Paper Table / Figure | Description |
 | :--- | :--- | :--- |
@@ -23,7 +23,7 @@ This directory contains result documentation and tools for aggregating experimen
 
 ---
 
-## ⚙️ Multi-Seed Aggregation Methodology
+## Multi-Seed Aggregation Methodology
 
 - **Execution Order:** Each notebook is executed **one seed at a time** in the order: `0, 123, 1234, 2025, 42`.
 - **Sample Standard Deviation ($\text{ddof}=1$):** All mean $\pm$ std values reported in paper Tables 4–8 represent **sample standard deviation ($s$, $\text{ddof}=1$)** aggregated across the 5 separate seed executions.
