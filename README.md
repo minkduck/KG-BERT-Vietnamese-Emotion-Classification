@@ -1,44 +1,28 @@
 # An Explainable Neuro-Symbolic PhoBERT–Ontology Framework for Vietnamese Emotion Classification
 
-Official source code and ontology resources for the paper:
-> **An Explainable Neuro-Symbolic PhoBERT–Ontology Framework for Vietnamese Emotion Classification**  
-> Minh-Duc Huynh, Thi-Thu-Thuy Pham  
-> *Submitted to Journal of Intelligent Information Systems*
-
-### Paper Citation (BibTeX Placeholder)
-```bibtex
-@article{huynh2026explainable,
-  title={An Explainable Neuro-Symbolic PhoBERT--Ontology Framework for Vietnamese Emotion Classification},
-  author={Huynh, Minh-Duc and Pham, Thi-Thu-Thuy},
-  journal={Submitted to Journal of Intelligent Information Systems},
-  year={2026}
-}
-```
+Minh-Duc Huynh, Thi-Thu-Thuy Pham  
+*Under review at the Journal of Intelligent Information Systems.*
 
 ---
 
-## 📌 Overview & Method Summary
+## 📌 Overview & Experiment Groups
 
-This repository provides a modular, reproducible implementation of our proposed neuro-symbolic framework alongside comparative baselines across three Vietnamese benchmark datasets (**UIT-VSFC**, **VSFC-Ekman**, and **UIT-VSMEC**).
+This repository provides the official implementation and ontology resources for our neuro-symbolic emotion classification framework across three Vietnamese benchmark datasets (**UIT-VSFC**, **VSFC-Ekman**, and **UIT-VSMEC**).
 
-The **proposed method** in the paper is **RawGate** — an input-conditioned gated fusion mechanism that dynamically weights a 24-dimensional ontology vector $o \in \mathbb{R}^{24}$ using the transformer text representation $h \in \mathbb{R}^{768}$:
-$$g = \sigma(W_g h + b_g), \quad h_{\text{fused}} = [h; g \odot o]$$
+The **proposed method** is **RawGate**: an input-conditioned sigmoid gate, $g = \sigma(W h + b)$, applied to a 24-dimensional ontology vector before concatenation with the sentence representation $h \in \mathbb{R}^{768}$:
+$$h_{\text{fused}} = [h; g \odot o]$$
 
-This is paired with a **two-tier explainability framework**:
-- **Tier-1 (Intrinsic Symbol Trace):** Sub-symbolic mapping from text tokens to ontology lexical entries, appraisal dimensions, intensity, and polarity. Accessible via `OntologyEngine.getvector(text, debug=True)`.
+This is combined with a **two-tier explainability framework**:
+- **Tier-1 (Intrinsic Symbol Trace):** Sub-symbolic mapping from text tokens to ontology lexical entries, appraisal dimensions, intensity, and polarity via `OntologyEngine.getvector(text, debug=True)`.
 - **Tier-2 (Post-hoc Explanations):** Feature attribution and local feature importance explanations via SHAP and LIME (`notebooks/05-shap-lime/`).
 
----
+The experimental pipeline is organized into **5 evaluation groups**:
 
-## 🧪 Evaluation Groups
-
-The experimental pipeline is organized into **5 core evaluation groups**:
-
-1. **`01-phobert-fusion-ablation/`** — Knowledge fusion ablation on **PhoBERT-base-v2**: Baseline, RawConcat, **RawGate (proposed)**, DenseConcat, DenseGate, and RawGate + rule layer (paper Table 4).
-2. **`02-visobert-fusion-ablation/`** — Knowledge fusion ablation on **ViSoBERT**, including Residual Gate fusion (paper Table 5).
-3. **`03-lexicon-vs-ontology/`** — Knowledge-source comparison across backbones: Baseline (no external knowledge), **VnEmoLex** (Doãn & Lưu, 2022) raw concatenation, and our formal Ekman appraisal ontology with RawGate (paper Table 6).
-4. **`04-final-model-comparison/`** — Re-implemented hybrid fusion baselines (**ALDONAr**, **KEAHT**, **CombViSA**) evaluated on ViSoBERT. All three re-implementations are fed the exact same 24-dimensional ontology vector as our models (paper Table 7).
-5. **`05-shap-lime/`** — Post-hoc explainability notebooks producing SHAP and LIME feature attributions and multi-class ROC curves (paper Figure 5 & Section 5.7.2).
+1. **`01-phobert-fusion-ablation/`** — Fusion ablation on **PhoBERT-base-v2**. The variants reported in the paper are Baseline, RawConcat, **RawGate (proposed)**, DenseConcat, DenseGate, and RawGate + rule layer (paper Table 4). The notebooks also contain additional exploratory variants (deep projection, wide projection) that are **not** reported in the paper.
+2. **`02-visobert-fusion-ablation/`** — The same ablation on **ViSoBERT**, plus a bottleneck residual gate (paper Table 5). An ontology concept cross-attention variant in these notebooks is exploratory and **not** reported in the paper.
+3. **`03-lexicon-vs-ontology/`** — Comparison of knowledge sources on both backbones: no external knowledge (Baseline), **VnEmoLex** (Doãn & Lưu, 2022) concatenation, and our ontology with RawGate (paper Table 6).
+4. **`04-final-model-comparison/`** — **Re-implemented hybrid fusion baselines**. Re-implementations of the core fusion mechanisms of **ALDONAr**, **KEAHT**, and **CombViSA** on a common ViSoBERT encoder fed our 24-dimensional ontology vector. These are re-implemented baselines for comparison, not reproductions of the original systems, and not our contribution (paper Table 7).
+5. **`05-shap-lime/`** — Post-hoc explainability notebooks producing SHAP and LIME feature attributions and multi-class ROC curves (paper Figure 5 and Section 5.7.2).
 
 ---
 
@@ -56,35 +40,12 @@ The experimental pipeline is organized into **5 core evaluation groups**:
 
 ---
 
-## 🔬 Architecture Details: Residual Gate Variants
-
-The **Residual Gate** ablation in Group 02 uses dataset-specific projection pipelines suited to each dataset's taxonomy depth:
-
-- **UIT-VSFC (`ViSoBERT_DeepOntology_V2`):** Two-layer bottleneck projection ($24 \to 64 \to 768$) with LayerNorm:  
-  $h_{\text{fused}} = h_{\text{text}} + \text{Dropout}(z \odot h_{\text{ont}})$, where $z = \sigma(W [h_{\text{text}}; h_{\text{ont}}] + b)$.
-- **UIT-VSMEC (`ViSoBERT_DeepOntology`):** Two-layer bottleneck projection ($24 \to 64 \to 768$) with BatchNorm1d.
-- **VSFC-Ekman (`ViSoBERT_Residual_Fusion`):** Two-step projection ($24 \to 256 \to 768$) with LayerNorm on the intermediate 256-d layer:  
-  $h_{\text{fused}} = \text{LayerNorm}(h_{\text{text}} + \text{Sigmoid}(W [h_{\text{text}}; h_{\text{ont}}]) \odot h_{\text{ont}})$.
-
----
-
-## 🔬 Additional Exploratory Ablations (Not Reported in Paper)
-
-Some notebooks contain extra architectural variants created during exploration that are retained for completeness:
-
-- **Deep Projection Adapter (`PhoBERT_DeepOntology` / `ViSoBERT_DeepOntology`):** Multi-layer non-linear bottleneck projection ($24 \to 64 \to 768$) prior to fusion.
-- **Wide Projection Adapter (`PhoBERT_WideProjection`):** Direct single-layer wide projection ($24 \to 768$) with dynamic gating.
-- **Ontology Concept Cross-Attention (`ViSoBERT_Ontology_CrossAttention` / OCA):** Slices the 24-d ontology vector into 5 group concept tokens ($768$-d each via LayerNorm+ReLU) and applies 8-head multi-head cross-attention over full token sequences.
-- **Deep Gated Interpolation (`fusion_type="gate"` in deep/wide models):** Soft convex interpolation gating $z \odot h_{\text{text}} + (1 - z) \odot h_{\text{ont}}$.
-
----
-
 ## 📂 Repository Structure
 
 ```
 .
 ├── README.md                     # Project overview and reproduction instructions
-├── AUDIT_REPORT.md               # Comprehensive technical audit report matching code to paper
+├── AUDIT_REPORT.md               # Technical audit report matching code to paper
 ├── LICENSE                       # MIT License
 ├── CITATION.cff                  # Citation metadata (CFF format)
 ├── requirements.txt              # Python dependencies
@@ -128,7 +89,7 @@ Some notebooks contain extra architectural variants created during exploration t
 │   └── 05-shap-lime/                   # Group 5: Post-hoc SHAP & LIME explainability
 │
 └── results/
-    ├── README.md                 # Documentation for experiment logs & CSV artifacts
+    ├── README.md                 # Documentation for experiment logs & reproduction status
     ├── aggregate.py              # Automated per-seed aggregation script (sample std ddof=1)
     └── VERIFICATION.md           # Cell-by-cell paper table verification matrix
 ```
@@ -140,7 +101,7 @@ Some notebooks contain extra architectural variants created during exploration t
 ## ⚙️ Installation & Setup
 
 ### 1. Hardware & Environment
-- **Hardware used for paper experiments:** Kaggle Notebooks environment with 2× NVIDIA T4 GPUs (CUDA acceleration).
+- Experiments were run on Kaggle notebooks with 2x NVIDIA T4 GPUs.
 - **Python:** $\ge 3.10$
 - **PyTorch:** $\ge 2.0$
 
@@ -162,30 +123,25 @@ pip install -r requirements.txt
 
 ---
 
-## 📊 Hyper-Parameters, Random Seeds & Significance Testing
+## 📊 Ontology Hyper-Parameters, Random Seeds & Significance Testing
 
-### Hyper-Parameters
-The exact ontology vectorizer hyper-parameters are preserved in `configs/*.yaml`:
+### Hyper-Parameters & Single Committed Run Seeds
+The exact ontology vectorizer hyper-parameters and example single-run seeds are preserved in `configs/*.yaml`:
 
-| Configuration | Default Conf | Manual Boost | Negation Attenuation | Alpha Similarity |
-| :--- | :---: | :---: | :---: | :---: |
-| **`vsfc.yaml`** | 0.90 * | *Defined (null)* | 0.40 | 0.20 |
-| **`vsfc_ekman.yaml`** | 0.85 * | *Defined (1.2)* | 0.50 | 0.20 |
-| **`vsmec.yaml`** | 0.85 * | *Defined (1.2)* | 0.50 | 0.20 |
+| Configuration | Default Conf | Manual Boost * | Negation Attenuation | Alpha Similarity | Single-Run Seed (PhoBERT) | Single-Run Seed (ViSoBERT) | Single-Run Seed (Lexicon/Onto) | Single-Run Seed (Baselines) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`vsfc.yaml`** | 0.90 | *Not applied* | 0.40 | 0.20 | 123 | 2025 | 42 | 1234 |
+| **`vsfc_ekman.yaml`** | 0.85 | *Not applied* | 0.50 | 0.20 | 0 | 2025 | 1234 | 42 |
+| **`vsmec.yaml`** | 0.85 | *Not applied* | 0.50 | 0.20 | 1234 | 42 | 42 | 2025 |
 
-> **Audit Notes on Hyper-Parameters:**  
-> - `default_conf` *: Fallback confidence for evocation triples lacking `confidenceScore`. Audit A9.1 confirmed 100% of RDF evocation triples possess an explicit `confidenceScore`, so `default_conf` is unused fallback logic in practice.  
-> - `manual_boost`: Parameter defined in config files (`1.2` / `null`) but not applied in `OntologyEngine` vectorizer logic (dead parameter; no effect on output vectors).
-
-### Multi-Seed Execution Protocol
-- Each notebook is executed **one seed at a time** in the exact order: **`0, 123, 1234, 2025, 42`**.
-- To reproduce all 5 runs for a given experiment, edit the seed variable in the configuration cell at the top of the notebook:  
-  `seed = 0` $\to$ `123` $\to$ `1234` $\to$ `2025` $\to$ `42` (or set `seeds.<group>` in `configs/*.yaml`).
-- All main paper results (mean $\pm$ sample standard deviation $s$, $\text{ddof}=1$) are aggregated manually across those 5 separate runs using [`results/aggregate.py`](results/aggregate.py).
+> **Notes on Hyper-Parameters and Seeds:**  
+> - **Manual Boost \***: Defined in the configuration (`1.2` / `null`) but not applied by the ontology engine, so it has no effect on the outputs.  
+> - **Per-Model Seed Columns**: The seed columns in the table above record the seed of the **single committed example run** for each respective group notebook, not the full set.  
+> - **Multi-Seed Results**: All results reported in the paper are the **mean and sample standard deviation ($\text{ddof}=1$) over the five seeds `0, 123, 1234, 2025, and 42`**, which were run as separate executions and aggregated afterwards.
 
 ### Statistical Significance Testing
 - `src/significance_test.py` implements a non-parametric paired sample/prediction-level permutation test ($10,000$ resamples, two-sided test statistic $| \text{metric}_B - \text{metric}_A |$, reporting both Macro-F1 and Accuracy $p$-values).
-- **Note:** These tests are exploratory; the paper reports mean $\pm$ standard deviation over five random seeds and does not base primary claims on $p$-values (see Section 4.4 of the paper).
+- **Note:** These tests are exploratory. The paper reports mean and standard deviation over five seeds and does not base any claim on p-values (see Section 4.4 of the paper).
 
 ---
 
@@ -197,25 +153,7 @@ The repository includes `ontology/ekman_appraisal_ontology.rdf`:
 - **OWL Classes:** **46**
 - **Object Properties:** 14 | **Datatype Properties:** 10
 
-This file corresponds to the **UIT-VSFC revision release** (91,005 triples). See [`ontology/README.md`](ontology/README.md) for details regarding release history.
-
----
-
-## 🛠️ Components & Availability Status
-
-### Included in Repository
-- ✅ Ontology vectorizer & query engine (`src/ontology_engine.py`)
-- ✅ Model architectures (`src/models/*.py`)
-- ✅ Data loaders (`src/data_loading.py`)
-- ✅ Significance testing module (`src/significance_test.py`)
-- ✅ Self-contained experiment notebooks (`notebooks/*/*.ipynb`)
-- ✅ Post-hoc SHAP & LIME explainability notebooks (`notebooks/05-shap-lime/`)
-- ✅ Automated results aggregation & verification tools (`results/aggregate.py`, `results/VERIFICATION.md`)
-
-### Not Yet Included (TODOs)
-- ❌ **Standalone Tier-1 Trace Export CLI:** TODO: add command-line tool to export structured XML/JSON traces (currently available in-memory via `engine.getvector(text, debug=True)`).
-- ❌ **Standalone Lexicon Build Script:** TODO: add offline RDF-to-lexicon exporter (currently executed at runtime during `OntologyEngine` initialization).
-- ❌ **VSFC-Ekman Derivation Script & Prompt:** TODO: add exact LLM prompt text for negative sentence mapping (see `data/vsfc-ekman/LABELING.md`).
+> **Note on Ontology Release:** The archived file (`ontology/ekman_appraisal_ontology.rdf`) is the release used for UIT-VSFC; the VSFC-Ekman and UIT-VSMEC experiments used an earlier release that is not archived here. See [`ontology/README.md`](ontology/README.md) for details.
 
 ---
 

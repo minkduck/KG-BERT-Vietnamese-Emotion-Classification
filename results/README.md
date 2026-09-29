@@ -1,45 +1,31 @@
-# Experiment Results & Log Ingestion
+# Experiment Results & Output Documentation
 
-This directory contains aggregated experiment results, per-seed CSV records, and verification tools matching the paper's published tables.
+This directory contains result documentation and tools for aggregating experiment outputs.
 
 ---
 
-## 📂 Mapping CSV Files to Paper Tables & Figures
+## 📌 Reproducibility & Archived Logs Notice
 
-| CSV File Path | Feeds Paper Table / Section | Description |
+> **Important Notice on Run Logs:**  
+> Per-seed execution logs were not archived in this repository, and the paper's tables therefore cannot be directly recomputed from pre-saved logs in this repository.  
+> However, all source code, model definitions (`src/models/`), ontology resources (`ontology/`), hyper-parameter configuration files (`configs/*.yaml`), random seeds (`0, 123, 1234, 2025, 42`), and self-contained execution notebooks (`notebooks/`) needed to re-run each experiment from scratch are fully provided.
+
+---
+
+## 📂 Mapping Notebooks to Paper Tables & Figures
+
+| Notebook Path | Feeds Paper Table / Figure | Description |
 | :--- | :--- | :--- |
-| **`01-phobert-fusion-ablation/*/per_seed.csv`** | **Table 4** | Knowledge fusion ablation on PhoBERT-base-v2 |
-| **`02-visobert-fusion-ablation/*/per_seed.csv`** | **Table 5** | Knowledge fusion ablation on ViSoBERT |
-| **`03-lexicon-vs-ontology/*/per_seed.csv`** | **Table 6** | Knowledge source comparison (VnEmoLex vs. Ontology) |
-| **`04-hybrid-baselines/*/per_seed.csv`** | **Table 7** | Re-implemented hybrid fusion baselines (ALDONAr, KEAHT, CombViSA) |
-| **`*/*/per_class.csv`** | **Tables 8–10** | Per-class Precision, Recall, F1, and Support metrics |
-| **`*/*/significance.csv`** | **Section 4.4** | Non-parametric paired permutation test $p$-values ($10,000$ resamples) |
-| **`05-shap-lime/`** | **Figure 5 / Section 5.7.2** | Post-hoc SHAP and LIME feature attribution outputs |
+| **`notebooks/01-phobert-fusion-ablation/`** | **Table 4** | Knowledge fusion ablation on PhoBERT-base-v2 |
+| **`notebooks/02-visobert-fusion-ablation/`** | **Table 5** | Knowledge fusion ablation on ViSoBERT |
+| **`notebooks/03-lexicon-vs-ontology/`** | **Table 6** | Knowledge source comparison (VnEmoLex vs. Ontology) |
+| **`notebooks/04-final-model-comparison/`** | **Table 7** | Re-implemented hybrid fusion baselines (ALDONAr, KEAHT, CombViSA) |
+| **`notebooks/05-shap-lime/`** | **Figure 5 & Section 5.7.2** | Post-hoc SHAP and LIME feature attribution outputs |
 
 ---
 
-## ⚙️ Seed Execution & Statistical Methodology
+## ⚙️ Multi-Seed Aggregation Methodology
 
-- **Individual Seed Runs:** Each notebook is executed **one seed at a time** in the exact order: `0, 123, 1234, 2025, 42`.
-- **Sample Standard Deviation ($\text{ddof}=1$):** All mean $\pm$ std figures reported in paper Tables 4–8 represent **sample standard deviation ($s$, $\text{ddof}=1$)** calculated across the 5 separate seed runs using `results/aggregate.py`.
-- **Note on Log Summaries:** Raw summary `.docx` documents calculate population standard deviation ($\sigma$, $\text{ddof}=0$). For $n=5$, population std and sample std differ by a factor of $\sqrt{\frac{5}{4}} \approx 1.11803$.
-
----
-
-## 📊 Automated Verification Tool
-
-Run the aggregation script to recalculate sample statistics across all per-seed CSV files:
-
-```bash
-python results/aggregate.py
-```
-
-See [`results/VERIFICATION.md`](VERIFICATION.md) for the complete cell-by-cell comparison table between reconstructed metrics and published paper values.
-
----
-
-## 🚨 Status of Log Files & Priority TODOs
-
-> **PROMINENT TODO (Author Action Required):**  
-> 1. **Group 01 Logs (Table 4):** Upload the per-seed console output `.docx` files for **`01-phobert-fusion-ablation`** (PhoBERT fusion ablation on UIT-VSFC, VSFC-Ekman, and UIT-VSMEC) to `results/_incoming/`. These back Table 4 of the paper.  
-> 2. **Groups 02, 03, 04 Logs:** Place the remaining incoming `.docx` run logs into `results/_incoming/` for automated conversion via `aggregate.py`.
+- **Execution Order:** Each notebook is executed **one seed at a time** in the order: `0, 123, 1234, 2025, 42`.
+- **Sample Standard Deviation ($\text{ddof}=1$):** All mean $\pm$ std values reported in paper Tables 4–8 represent **sample standard deviation ($s$, $\text{ddof}=1$)** aggregated across the 5 separate seed executions.
+- **Aggregation Tool:** The script [`results/aggregate.py`](aggregate.py) is provided to compute sample statistics (`ddof=1`) across output CSV files.
