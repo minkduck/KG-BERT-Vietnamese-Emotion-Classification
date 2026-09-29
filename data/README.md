@@ -14,8 +14,8 @@ This directory contains the datasets used in the paper, organized into three sub
   - *Citation:*
     > Nguyen, K. T. V., Nguyen, V. O., & Nguyen, N. L. T. (2018). *UIT-VSFC: Vietnamese Students' Feedback Corpus for Sentiment Analysis*. In Proceedings of the 2018 10th International Conference on Knowledge and Systems Engineering (KSE), pp. 19-24. IEEE.
 - **Licensing & Redistribution Notice:**
-  Original source: [UIT-VSFC Github Repository / Publication](https://github.com/uitnlp/UIT-VSFC).
-  > **TODO:** Confirm redistribution is permitted; otherwise replace the zip files with download instructions.
+  Original source: [UIT-VSFC Github Repository / Publication](https://github.com/uitnlp/UIT-VSFC).  
+  *Note:* Redistribution terms for the bundled UIT-VSFC archives should be confirmed against UIT-NLP's terms of use.
 
 ---
 
@@ -29,8 +29,8 @@ This directory contains the datasets used in the paper, organized into three sub
   - *Citation:*
     > Ho, V. A., Nguyen, D. H., Nguyen, D. V., Pham, Q. T., Nguyen, K. T. V., & Nguyen, N. L. T. (2020). *Emotion Recognition for Vietnamese Social Media Text using Pre-trained Language Models*. In Proceedings of the 7th International Conference on Asian Language Processing (IALP), pp. 197-202. IEEE.
 - **Licensing & Redistribution Notice:**
-  Original source: [UIT-VSMEC Publication](https://ieeexplore.ieee.org/document/9308544).
-  > **TODO:** Confirm redistribution is permitted; otherwise replace the zip files with download instructions.
+  Original source: [UIT-VSMEC Publication](https://ieeexplore.ieee.org/document/9308544).  
+  *Note:* Redistribution terms for the bundled UIT-VSMEC archives should be confirmed against UIT-NLP's terms of use.
 
 ---
 
@@ -41,12 +41,11 @@ This directory contains the datasets used in the paper, organized into three sub
 - **Format:** CSV files: `train.csv`, `dev.csv`, `test.csv` (Columns: `Sentence`/`Text`, `Emotion`/`Ekman_Label`, `Original_Sentiment`).
 - **Provenance & Derivation Protocol:**
   - VSFC-Ekman re-labels **UIT-VSFC** keeping the original splits (Train: 11,426; Dev: 1,583; Test: 3,166).
-  - Original `Positive` sentences were mapped mechanically to `Happiness`.
-  - Original `Neutral` sentences were kept as `Neutral`.
-  - For `Negative` sentences, a candidate emotion was suggested by a large language model (Gemini) and then accepted or corrected by the first author.
-  - There were no written annotation guidelines, no trained annotators, and no measured inter-annotator agreement, so **UIT-VSMEC is the primary emotion benchmark** and VSFC-Ekman is a secondary, taxonomy-aligned setting.
-  - > **TODO:** Specify the exact Gemini model version (e.g. Gemini 1.5 Pro / Flash) and access date.
-- **Test Set Label Distribution:**
+  - Positive was mapped to `Happiness` and Neutral kept as `Neutral`.
+  - For Negative sentences, a candidate emotion label was first suggested by a commercial large language model (Google Gemini) accessed through its public web interface, then accepted or corrected by the first author.
+  - There were no written annotation guidelines, no trained annotators and no measured inter-annotator agreement, so **UIT-VSMEC is the primary emotion benchmark** and VSFC-Ekman a secondary, taxonomy-aligned setting.
+  - > **TODO:** Record the exact Gemini model version and access month.
+- **Test-Set Label Distribution:**
   - `Happiness`: 1,586
   - `Sadness`: 680
   - `Anger`: 576

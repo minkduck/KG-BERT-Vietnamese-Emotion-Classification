@@ -7,8 +7,7 @@ This directory contains result documentation and tools for aggregating experimen
 ## 📌 Reproducibility & Archived Logs Notice
 
 > **Important Notice on Run Logs:**  
-> Per-seed execution logs were not archived in this repository, and the paper's tables therefore cannot be directly recomputed from pre-saved logs in this repository.  
-> However, all source code, model definitions (`src/models/`), ontology resources (`ontology/`), hyper-parameter configuration files (`configs/*.yaml`), random seeds (`0, 123, 1234, 2025, 42`), and self-contained execution notebooks (`notebooks/`) needed to re-run each experiment from scratch are fully provided.
+> Per-seed run logs were not archived, so the tables in the paper cannot be recomputed from this repository; the code, configurations and seeds needed to re-run every experiment are provided here.
 
 ---
 
