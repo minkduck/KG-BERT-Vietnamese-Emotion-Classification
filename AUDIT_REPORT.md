@@ -151,20 +151,24 @@ The rule layer is implemented as an inline `NeuroSymbolicReasoner` / `NeuroSymbo
 
 ---
 
-## A6. Ontology File
+## A6. Ontology Files
 
-**File:** `ontology/ekman_appraisal_ontology.rdf` (9.76 MB)
+The repository contains both ontology releases under `ontology/`:
 
-| Element | Count |
-|---|---|
-| Total RDF triples | **91,005** |
-| OWL Named Classes | 46 |
-| Object Properties | 14 |
-| Datatype Properties | 10 |
-| Named Individuals | 11,733 |
+1. **`ontology/ekman_appraisal_ontology.rdf` (Revision release for UIT-VSFC):**
+   - **Total RDF triples:** **91,005**
+   - **OWL Named Classes:** 46
+   - **Object Properties:** 14
+   - **Datatype Properties:** 10
+   - **Named Individuals:** 11,733
 
-- The repo contains **91,005 triples** — this is the **revision release for UIT-VSFC**.
-- Per author clarification, only the 91,005-triple revision release will be archived in the repository; the earlier 90,420-triple release is no longer available.
+2. **`ontology/ekman_appraisal_ontology_v1.rdf` (Initial release for VSFC-Ekman & UIT-VSMEC):**
+   - **Total RDF triples:** **90,420**
+   - **OWL Named Classes:** 46
+   - **Object Properties:** 14
+   - **Datatype Properties:** 10
+   - **Named Individuals:** 11,643
+
 
 ---
 

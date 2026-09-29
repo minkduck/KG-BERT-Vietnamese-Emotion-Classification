@@ -5,7 +5,7 @@ Under review at the Journal of Intelligent Information Systems.
 
 ---
 
-## Overview & Experiment Groups
+## 📌 Overview & Experiment Groups
 
 This repository provides the official source code and ontology resources for our neuro-symbolic framework for Vietnamese emotion classification.
 
@@ -23,7 +23,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## Paper ↔ Code Mapping Table
+## 🗺️ Paper ↔ Code Mapping Table
 
 | Paper Section / Table / Fig | Experiment / Concept | Notebook Path | Model Class / Flags | Associated Config |
 | :--- | :--- | :--- | :--- | :--- |
@@ -37,7 +37,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## Repository Structure
+## 📂 Repository Structure
 
 ```
 .
@@ -49,8 +49,9 @@ The experimental pipeline is organized into **5 evaluation groups**:
 ├── .gitignore                    # Version control ignore list
 │
 ├── ontology/
-│   ├── README.md                 # Knowledge Graph release notes & version mapping
-│   └── ekman_appraisal_ontology.rdf  # Ekman & Cognitive Appraisal Knowledge Graph (OWL/RDF)
+│   ├── README.md                          # Knowledge Graph release notes & version mapping
+│   ├── ekman_appraisal_ontology.rdf       # Revision release for UIT-VSFC (91,005 triples)
+│   └── ekman_appraisal_ontology_v1.rdf    # Initial release for VSFC-Ekman & UIT-VSMEC (90,420 triples)
 │
 ├── data/
 │   ├── README.md                 # Dataset documentation, provenance & licensing notices
@@ -95,7 +96,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 
 ---
 
-## Installation & Setup
+## ⚙️ Installation & Setup
 
 ### 1. Hardware & Environment
 - Experiments were run on Kaggle notebooks with 2x NVIDIA T4 GPUs.
@@ -107,6 +108,7 @@ The experimental pipeline is organized into **5 evaluation groups**:
 ```bash
 # Clone the repository
 git clone https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification.git
+cd KG-BERT-Vietnamese-Emotion-Classification
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -119,7 +121,7 @@ pip install -r requirements.txt
 
 ---
 
-## Ontology Hyper-Parameters, Random Seeds & Significance Testing
+## 📊 Ontology Hyper-Parameters, Random Seeds & Significance Testing
 
 ### Hyper-Parameters & Single Committed Run Seeds
 The exact ontology vectorizer hyper-parameters and example single-run seeds are preserved in `configs/*.yaml`:
@@ -142,18 +144,19 @@ The exact ontology vectorizer hyper-parameters and example single-run seeds are 
 
 ---
 
-## Ontology Knowledge Graph Release
+## 🌌 Ontology Knowledge Graph Releases
 
-The repository includes `ontology/ekman_appraisal_ontology.rdf`:
-- **Triple Count:** **91,005** triples
-- **Named Individuals:** **11,733**
-- **OWL Classes:** **46**
-- **Object Properties:** 14 | **Datatype Properties:** 10
+The repository provides both releases of the Ekman & Cognitive Appraisal Knowledge Graph under `ontology/`:
 
-> **Note on Ontology Release:** The archived RDF file is the release used for the UIT-VSFC experiments; the VSFC-Ekman and UIT-VSMEC experiments used a slightly earlier release that is not archived here. See [`ontology/README.md`](ontology/README.md) for details.
+| File Path | Total Triples | Target Experiments / Datasets | Details |
+| :--- | :---: | :--- | :--- |
+| **`ontology/ekman_appraisal_ontology.rdf`** | **91,005** | **UIT-VSFC** (3-class Sentiment) | Revision release with refined polarity weights. |
+| **`ontology/ekman_appraisal_ontology_v1.rdf`** | **90,420** | **VSFC-Ekman** & **UIT-VSMEC** (7-class Emotion) | Initial submission release backing Table 2 of the paper. |
+
+See [`ontology/README.md`](ontology/README.md) for full individual and property breakdowns across both releases.
 
 ---
 
-## Code Availability
+## 🔒 Code Availability
 
 Source code and ontology resources: https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification
