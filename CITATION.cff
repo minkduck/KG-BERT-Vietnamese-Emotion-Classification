@@ -6,14 +6,13 @@ authors:
     given-names: "Minh-Duc"
     email: "huynhmduc2001@gmail.com"
     affiliation: "Department of Information Technology, Nha Trang University"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
   - family-names: "Pham"
     given-names: "Thi-Thu-Thuy"
     affiliation: "Department of Information Technology, Nha Trang University"
-    orcid: "https://orcid.org/0000-0000-0000-0000"
 date-released: 2026-09-25
-url: "https://github.com/[username]/[repo-name]"
-repository-code: "https://github.com/[username]/[repo-name]"
+url: "https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification"
+repository-code: "https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification"
+license: MIT
 keywords:
   - natural language processing
   - sentiment analysis

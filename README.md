@@ -138,5 +138,4 @@ The exact values used across all experiments are preserved in `configs/*.yaml`:
 
 ## 🔒 Code Availability
 
-The source code, ontology resources, experiment configurations, and reproduction instructions are available at: [GitHub URL].
-"# KG-BERT-Vietnamese-Emotion-Classification" 
+The source code, ontology resources, experiment configurations, and reproduction instructions are available at: https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification.
