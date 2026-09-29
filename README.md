@@ -1,6 +1,6 @@
-# Ontology-Guided Knowledge Injection for Vietnamese Sentiment and Emotion Analysis
+# An Explainable Neuro-Symbolic PhoBERT–Ontology Framework for Vietnamese Emotion Classification
 
-Official source code and ontology resources accompanying the research paper on neuro-symbolic knowledge integration for Vietnamese sentiment analysis and emotion classification.
+Official source code and ontology resources for the paper of the same title (Huynh & Pham), submitted to the *Journal of Intelligent Information Systems*.
 
 ---
 
@@ -10,14 +10,12 @@ This repository provides a modular, reproducible implementation of our proposed 
 
 The experimental pipeline is organized into **4 core evaluation groups**:
 
-1. **`01-phobert-fusion-ablation/` (PhoBERT Fusion Ablation):**
-   Ablation study of knowledge fusion strategies on the **PhoBERTv2** backbone (evaluating Baseline, Concatenation, Dynamic Gating, Dense 64d, Deep Ontology Projection, and Wide Projection).
-2. **`02-visobert-fusion-ablation/` (ViSoBERT Fusion Ablation):**
-   Ablation study of fusion strategies on the **ViSoBERT** backbone (evaluating Baseline, Raw xAI 24d, Dense Adapter, Deep Gated Residual Fusion, and Ontology Concept Cross-Attention).
-3. **`03-lexicon-vs-ontology/` (Lexicon vs. Ontology Comparison):**
-   Direct empirical comparison between a pre-existing emotion lexicon (**VnEmoLex**, Doãn & Lưu, 2022) and our formal Ekman appraisal ontology, evaluated across both PhoBERT and ViSoBERT architectures (this evaluates knowledge representation quality, not a separate backbone).
-4. **`04-final-model-comparison/` (Proposed Model vs. SOTA Literature):**
-   Comprehensive benchmarking comparing the baseline ViSoBERT model and established literature SOTA methods (**ALDONAr**, **KEAHT**) against our proposed model (**CombViSA** / *Ontology-Guided Cross-Attention* — the primary contribution of the paper).
+1. **`01-phobert-fusion-ablation/`** — Fusion ablation on **PhoBERT-base-v2**: baseline, RawConcat, **RawGate (proposed)**, DenseConcat, DenseGate, and RawGate + rule layer (paper Table 4).
+2. **`02-visobert-fusion-ablation/`** — The same ablation on **ViSoBERT**, plus a residual gate (paper Table 5).
+3. **`03-lexicon-vs-ontology/`** — Knowledge-source comparison on both backbones: no external knowledge, **VnEmoLex** (Doãn & Lưu, 2022) concatenation, and our ontology with RawGate (paper Table 6).
+4. **`04-final-model-comparison/`** — Re-implementations of the fusion mechanisms of **ALDONAr**, **KEAHT** and **CombViSA** on ViSoBERT. All three are fed the same 24-dimensional ontology vector as our models. These are re-implemented baselines, not the original systems (paper Table 7).
+
+Some notebooks contain additional exploratory variants (e.g. deep or wide ontology projections) that are not reported in the paper.
 
 ---
 
@@ -80,6 +78,8 @@ The experimental pipeline is organized into **4 core evaluation groups**:
     └── .gitkeep                  # Experiment artifacts and output logs
 ```
 
+UIT-VSFC and UIT-VSMEC belong to their original authors (UIT-NLP); please cite and follow their terms of use.
+
 ---
 
 ## ⚙️ Installation & Setup
@@ -92,8 +92,8 @@ The experimental pipeline is organized into **4 core evaluation groups**:
 
 ```bash
 # Clone the repository
-git clone [GitHub URL]
-cd [repo-name]
+git clone https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification.git
+cd KG-BERT-Vietnamese-Emotion-Classification
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -120,7 +120,7 @@ Each notebook in `notebooks/` is self-contained and pre-configured with exact ex
 > [!NOTE]
 > **Data Handling:** Notebooks use `src.data_loading` which automatically parses `.zip` archives in `data/` or extracted directories. No manual unzipping is required.
 >
-> **Statistical Significance Testing:** Paired permutation testing (`src.significance_test`) with 10,000 resamples is performed in `02-visobert-fusion-ablation`, `03-lexicon-vs-ontology`, and `04-final-model-comparison`. The initial exploration notebooks in `01-phobert-fusion-ablation` do not include permutation testing as per the original experimental design.
+> **Statistical testing:** `src/significance_test.py` implements a paired permutation test (10,000 resamples), used during exploration in groups 02–04. The paper reports mean ± standard deviation over random seeds and does not report p-values; see Section 4.4 of the paper.
 
 ---
 
@@ -128,11 +128,13 @@ Each notebook in `notebooks/` is self-contained and pre-configured with exact ex
 
 The exact values used across all experiments are preserved in `configs/*.yaml`:
 
-| Configuration | Default Conf | Manual Boost | Negation Attenuation | Alpha Similarity | PhoBERT Seed | ViSoBERT Seed | Emo Seed | CombViSA Seed |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **`vsfc.yaml`** | 0.90 | *None* | 0.40 | 0.20 | 123 | 2025 | 42 | 1234 |
-| **`vsfc_ekman.yaml`** | 0.85 | 1.20 | 0.50 | 0.20 | 0 | 2025 | 1234 | 42 |
-| **`vsmec.yaml`** | 0.85 | 1.20 | 0.50 | 0.20 | 1234 | 42 | 42 | 2025 |
+| Configuration | Default Conf | Negation Attenuation | Alpha Similarity |
+| :--- | :---: | :---: | :---: |
+| **`vsfc.yaml`** | 0.90 | 0.40 | 0.20 |
+| **`vsfc_ekman.yaml`** | 0.85 | 0.50 | 0.20 |
+| **`vsmec.yaml`** | 0.85 | 0.50 | 0.20 |
+
+All reported results are averaged over the seeds 0, 42, 123, 1234 and 2025; the ViSoBERT ablation uses fewer seeds on two datasets, as stated in the caption of paper Table 5.
 
 ---
 
