@@ -159,3 +159,22 @@ See [`ontology/README.md`](ontology/README.md) for full individual and property 
 ## Code Availability
 
 Source code and ontology resources: https://github.com/minkduck/KG-BERT-Vietnamese-Emotion-Classification
+---
+
+## English Cross-Lingual Confirmatory Extension (IJMLC)
+
+The repository now includes the completed English external-validation experiment used in the revised manuscript:
+
+- **Datasets:** DailyDialog and MELD
+- **Backbone:** RoBERTa-base
+- **Models:** `baseline`, `nrcflat`, `rawgate_zero`, `rawgate_shuffled`, `rawgate`
+- **Seeds:** `0, 42, 123, 1234, 2025`
+- **Completed runs:** **50/50**
+- **Ontology:** `ontology/ekman_appraisal_ontology_v2.rdf`
+- **Runner:** `scripts/run_experiment.py`
+- **Kaggle runner:** `notebooks/06-english-crosslingual/IJMLC_English_5seed_confirmatory_resume_v10_2.ipynb`
+- **Public-safe results:** `results/english/confirmatory_5seed/`
+
+The English experiment adds ontology-v2 appraisal inference and two semantic controls: **RawGate-Zero** and **RawGate-Shuffled**. The five-seed results show that the predictive advantage observed for RawGate in the Vietnamese PhoBERT ablation does **not** automatically transfer to English dialogue emotion classification: NRC-flat is strongest on DailyDialog Macro-F1, while the RoBERTa text-only baseline is strongest on MELD.
+
+See [`README_ENGLISH_EXTENSION.md`](README_ENGLISH_EXTENSION.md) for reproduction instructions and [`results/english/confirmatory_5seed/README.md`](results/english/confirmatory_5seed/README.md) for the canonical corrected five-seed summaries.

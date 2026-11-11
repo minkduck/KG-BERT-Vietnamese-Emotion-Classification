@@ -1,0 +1,24 @@
+{
+  "base_repository_commit": "af00e84424b3ae9656e4be2b8042c29a3cc5b737",
+  "completed_runs": 50,
+  "datasets": [
+    "DailyDialog",
+    "MELD"
+  ],
+  "seeds": [
+    0,
+    42,
+    123,
+    1234,
+    2025
+  ],
+  "models": [
+    "baseline",
+    "nrcflat",
+    "rawgate",
+    "rawgate_shuffled",
+    "rawgate_zero"
+  ],
+  "public_results_sha256": "72474e42bacb74535e574becc7e3b84971000482a481cb42724fc7288119481d",
+  "corrected_analysis_sha256": "e4f42858e676c2e72805e48f232a8dd2f7f6a33f990b5d0ebb21202113791fea"
+}

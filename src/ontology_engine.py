@@ -1,16 +1,37 @@
+"""Ontology feature extraction engine with pluggable language adapters.
+
+This file is a backward-compatible replacement for the repository's current
+``src/ontology_engine.py``.  The Vietnamese default path is intentionally preserved,
+while two optional arguments enable the IJMLC English experiments:
+
+``language_adapter``
+    Object implementing ``tokenize(text)``.  Defaults to ``VietnameseAdapter``.
+
+``external_lexicon_path``
+    JSON lexicon in the same internal entry format used by the RDF compiler.  When
+    supplied, the TBox/RDF is still loaded (including emotion-similarity edges), but
+    lexical matching uses the external language-specific layer.
+
+The output remains exactly 24 dimensions:
+7 emotion + 9 appraisal + 3 intensity + 3 polarity + 2 negation.
+"""
+
+from __future__ import annotations
+
+import json
 import os
 import re
+from typing import Dict, Iterable, Optional
+
 import numpy as np
-from pyvi import ViTokenizer
 from rdflib import Graph, Namespace, RDF
 from unidecode import unidecode
 
+from src.language_adapters import BaseLanguageAdapter, VietnameseAdapter
+
 
 class OntologyEngine:
-    """
-    Extracts structured lexical knowledge vectors (24-dimensional) from an RDF Ekman Knowledge Graph.
-    Used for 7-class emotion classification tasks (VSFC-Ekman, UIT-VSMEC).
-    """
+    """Extract structured 24-d ontology vectors for seven-class emotion tasks."""
 
     def __init__(
         self,
@@ -20,23 +41,21 @@ class OntologyEngine:
         negation_attenuation=0.5,
         alpha_similarity=0.2,
         verbose=True,
+        language_adapter: Optional[BaseLanguageAdapter] = None,
+        external_lexicon_path: Optional[str] = None,
     ):
         self.EKMAN = Namespace("http://example.org/ekman-ontology#")
         self.default_conf = float(default_conf)
+        # Kept for backward compatibility.  The original repository did not apply it.
         self.manual_boost = float(manual_boost) if manual_boost is not None else 1.0
         self.negation_attenuation = float(negation_attenuation)
         self.alpha_similarity = float(alpha_similarity)
         self.verbose = bool(verbose)
+        self.language_adapter = language_adapter or VietnameseAdapter()
+        self.external_lexicon_path = external_lexicon_path
 
-        # 1. Target Taxonomy Configurations (7 Ekman Emotion Classes)
         self.ALLEMOTIONS = [
-            "Anger",
-            "Disgust",
-            "Fear",
-            "Happiness",
-            "Neutral",
-            "Sadness",
-            "Surprise",
+            "Anger", "Disgust", "Fear", "Happiness", "Neutral", "Sadness", "Surprise"
         ]
         self.ALLAPPRAISALS = [
             "GoalObstructionAppraisal",
@@ -49,15 +68,9 @@ class OntologyEngine:
             "UnpredictabilityAppraisal",
             "UnfairnessAppraisal",
         ]
-        self.INTENSITY_CLASSES = [
-            "HighIntensity",
-            "MediumIntensity",
-            "LowIntensity",
-        ]
+        self.INTENSITY_CLASSES = ["HighIntensity", "MediumIntensity", "LowIntensity"]
         self.POLARITY_CLASSES = [
-            "PositivePolarity",
-            "NegativePolarity",
-            "NeutralPolarity",
+            "PositivePolarity", "NegativePolarity", "NeutralPolarity"
         ]
 
         self.EMOTION_MAPPING = {
@@ -74,7 +87,6 @@ class OntologyEngine:
             "NegationCue": "NegationCue",
         }
 
-        # Semantic polarity derivation rules
         self.IMPLIED_POLARITY = {
             "Anger": "NegativePolarity",
             "Disgust": "NegativePolarity",
@@ -96,48 +108,80 @@ class OntologyEngine:
             "mình", "bạn", "nó", "hắn", "anh", "chị", "em", "là", "thì", "mà",
             "bị", "được", "cái", "con", "người",
         }
-        self.VALID_DOMAINS = {
-            "GeneralDomain",
-            "SocialDomain",
-            "EducationDomain",
-        }
+        self.VALID_DOMAINS = {"GeneralDomain", "SocialDomain", "EducationDomain"}
 
-        # Load RDF Knowledge Graph
         if self.verbose:
             print(f"Loading Knowledge Graph: {rdf_path}")
         self.g = Graph()
-        if os.path.exists(rdf_path):
-            self.g.parse(rdf_path)
-            if self.verbose:
-                print(f"Loaded {len(self.g)} triples.")
-        else:
+        if not os.path.exists(rdf_path):
             raise FileNotFoundError(f"RDF file not found at: {rdf_path}")
+        self.g.parse(rdf_path)
+        if self.verbose:
+            print(f"Loaded {len(self.g)} triples.")
 
         self.sim_matrix = self._build_similarity_matrix()
-        self.lexicon_map = self._build_strict_lexicon()
+        if external_lexicon_path:
+            self.lexicon_map = self._load_external_lexicon(external_lexicon_path)
+        else:
+            self.lexicon_map = self._build_strict_lexicon()
 
-        self.mwe_max_len = 1
-        for k in self.lexicon_map.keys():
-            self.mwe_max_len = max(self.mwe_max_len, len(k.split()))
-
+        self.mwe_max_len = max([1] + [len(k.split()) for k in self.lexicon_map.keys()])
         if self.verbose:
-            print(f"Lexicon initialized with {len(self.lexicon_map)} entries.")
+            src = f"external lexicon {external_lexicon_path}" if external_lexicon_path else "RDF ABox"
+            print(f"Lexicon initialized with {len(self.lexicon_map)} keys from {src}.")
 
     def _norm(self, s):
-        """Normalize string to lowercase single-spaced format."""
         if not s:
             return ""
-        return re.sub(
-            r"\s+", " ", str(s).lower().strip().replace("_", " ")
-        ).strip()
+        return re.sub(r"\s+", " ", str(s).lower().strip().replace("_", " ")).strip()
 
     def _local(self, uri):
-        """Extract local identifier from RDF URI."""
         uri_str = str(uri)
         return uri_str.split("#")[-1] if "#" in uri_str else uri_str.split("/")[-1]
 
+    def _tokens(self, text):
+        return [self._norm(t) for t in self.language_adapter.tokenize(str(text)) if self._norm(t)]
+
+    def _load_external_lexicon(self, path: str) -> Dict[str, list]:
+        with open(path, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        if not isinstance(raw, dict):
+            raise ValueError("External lexicon JSON must be a dictionary keyed by word/phrase.")
+
+        out = {}
+        for raw_key, raw_entries in raw.items():
+            key = self._norm(raw_key)
+            if not key:
+                continue
+            entries = raw_entries if isinstance(raw_entries, list) else [raw_entries]
+            cleaned = []
+            for ent in entries:
+                if not isinstance(ent, dict):
+                    continue
+                emotions = {
+                    self.EMOTION_MAPPING.get(str(k), str(k)): float(v)
+                    for k, v in (ent.get("emotions") or {}).items()
+                    if self.EMOTION_MAPPING.get(str(k), str(k)) in self.ALLEMOTIONS
+                }
+                is_neg = bool(ent.get("isnegation", False))
+                if not emotions and not is_neg:
+                    continue
+                cleaned.append(
+                    {
+                        "emotions": emotions,
+                        "score": float(ent.get("score", self.default_conf)),
+                        "appraisals": list(ent.get("appraisals") or []),
+                        "intensities": list(ent.get("intensities") or []),
+                        "polarities": list(ent.get("polarities") or []),
+                        "isnegation": is_neg,
+                        "evidence_type": ent.get("evidence_type", "ExternalLexicon"),
+                    }
+                )
+            if cleaned:
+                out[key] = cleaned
+        return out
+
     def _build_similarity_matrix(self):
-        """Build normalized inter-emotion similarity matrix."""
         n = len(self.ALLEMOTIONS)
         mat = np.zeros((n, n), dtype=np.float32)
         np.fill_diagonal(mat, 1.0)
@@ -149,6 +193,7 @@ class OntologyEngine:
                       ekman:similarityScore ?score ;
                       ekman:linksEmotion ?e1 ;
                       ekman:linksEmotion ?e2 .
+                FILTER(?e1 != ?e2)
             }
             """
             for row in self.g.query(q):
@@ -157,38 +202,58 @@ class OntologyEngine:
                 if e1 in self.ALLEMOTIONS and e2 in self.ALLEMOTIONS:
                     i, j = self.ALLEMOTIONS.index(e1), self.ALLEMOTIONS.index(e2)
                     mat[i, j] = mat[j, i] = max(mat[i, j], float(row.score))
-        except Exception as e:
+        except Exception as exc:
             if self.verbose:
-                print(f"Similarity matrix query warning: {e}")
+                print(f"Similarity matrix query warning: {exc}")
+        row_sum = mat.sum(axis=1, keepdims=True)
+        row_sum[row_sum == 0] = 1.0
+        return mat / row_sum
 
-        s = mat.sum(axis=1, keepdims=True)
-        s[s == 0] = 1.0
-        return mat / s
+    def _infer_attributes(self, resource, emotions: Iterable[str]):
+        ek = self.EKMAN
+        a, i, p = set(), set(), set()
+
+        def gather(res):
+            for o in self.g.objects(res, ek.evokesAppraisal):
+                a.add(self._local(o))
+            for o in self.g.objects(res, ek.hasIntensity):
+                i.add(self._local(o))
+            for o in self.g.objects(res, ek.hasPolarity):
+                p.add(self._local(o))
+
+        gather(resource)
+        for t in self.g.objects(resource, RDF.type):
+            gather(t)
+
+        if not p:
+            for e in emotions:
+                if e in self.IMPLIED_POLARITY:
+                    p.add(self.IMPLIED_POLARITY[e])
+        if not p:
+            for app in a:
+                if app in self.IMPLIED_POLARITY:
+                    p.add(self.IMPLIED_POLARITY[app])
+        return a, i, p
 
     def _build_strict_lexicon(self):
-        """Extract lexicon entries, confidence weights, and emotional properties."""
         ek = self.EKMAN
         lookup = {}
         mix_cache, sim_cache = {}, {}
 
-        # Cache emotion mixtures
         query_mix = """
         PREFIX ekman: <http://example.org/ekman-ontology#>
         SELECT ?m ?e ?w WHERE {
-            ?m a ekman:EmotionMixture ;
-               ekman:hasComponent ?c .
-            ?c ekman:componentEmotion ?e ;
-               ekman:componentWeight ?w .
+            ?m a ekman:EmotionMixture ; ekman:hasComponent ?c .
+            ?c ekman:componentEmotion ?e ; ekman:componentWeight ?w .
         }
         """
         for r in self.g.query(query_mix):
-            m, e, w = r.m, self.EMOTION_MAPPING.get(self._local(r.e)), float(r.w)
+            m = r.m
+            e = self.EMOTION_MAPPING.get(self._local(r.e))
+            w = float(r.w)
             if e in self.ALLEMOTIONS:
-                mix_cache.setdefault(m, {})[e] = (
-                    mix_cache.setdefault(m, {}).get(e, 0.0) + w
-                )
+                mix_cache.setdefault(m, {})[e] = mix_cache.setdefault(m, {}).get(e, 0.0) + w
 
-        # Cache direct emotion categories
         for s, _, o in self.g.triples((None, ek.hasEmotionCategory, None)):
             e = self.EMOTION_MAPPING.get(self._local(o))
             if e in self.ALLEMOTIONS:
@@ -197,17 +262,16 @@ class OntologyEngine:
         for s in self.g.subjects(RDF.type, None):
             if s in mix_cache or s in sim_cache:
                 continue
-            ts = list(self.g.objects(s, RDF.type))
-            if ek.NegationCue in ts:
+            types = list(self.g.objects(s, RDF.type))
+            if ek.NegationCue in types:
                 sim_cache[s] = ["NegationCue"]
             else:
-                for t in ts:
-                    m = self.EMOTION_MAPPING.get(self._local(t))
-                    if m in self.ALLEMOTIONS:
-                        sim_cache[s] = [m]
+                for t in types:
+                    mapped = self.EMOTION_MAPPING.get(self._local(t))
+                    if mapped in self.ALLEMOTIONS:
+                        sim_cache[s] = [mapped]
                         break
 
-        # Populate lexicon map
         q = """
         PREFIX ekman: <http://example.org/ekman-ontology#>
         SELECT ?word ?stim ?ev ?base ?type ?dom WHERE {
@@ -224,76 +288,42 @@ class OntologyEngine:
         for r in self.g.query(q):
             if r.dom and self._local(r.dom) not in self.VALID_DOMAINS:
                 continue
-            w = self._norm(r.word)
-            if len(w) < 2 or w in self.AMBIGUOUS_TERMS:
+            word = self._norm(r.word)
+            if len(word) < 2 or word in self.AMBIGUOUS_TERMS:
                 continue
 
-            emos = {}
+            emotions = {}
             if r.stim in mix_cache:
                 raw = mix_cache[r.stim]
-                tot = sum(raw.values())
-                if tot > 0:
-                    emos = {k: v / tot for k, v in raw.items()}
+                total = sum(raw.values())
+                if total > 0:
+                    emotions = {k: v / total for k, v in raw.items()}
             elif r.stim in sim_cache:
-                lst = sim_cache[r.stim]
-                emos = {k: 1.0 for k in lst}
+                emotions = {k: 1.0 for k in sim_cache[r.stim] if k != "NegationCue"}
 
-            if not emos:
+            is_neg = r.stim in sim_cache and "NegationCue" in sim_cache[r.stim]
+            if not emotions and not is_neg:
                 continue
 
-            apps, ints, pols = self._infer_attributes(r.stim, emos.keys())
-            entry_score = float(r.ev or self.default_conf) * float(
-                r.base or 1.0
-            )
-
+            apps, intensities, polarities = self._infer_attributes(r.stim, emotions.keys())
+            entry_score = float(r.ev or self.default_conf) * float(r.base or 1.0)
             entry = {
-                "emotions": emos,
+                "emotions": emotions,
                 "score": entry_score,
                 "appraisals": list(apps),
-                "intensities": list(ints),
-                "polarities": list(pols),
-                "isnegation": "NegationCue" in emos,
+                "intensities": list(intensities),
+                "polarities": list(polarities),
+                "isnegation": is_neg,
+                "evidence_type": str(r.type) if r.type else "OntologyABox",
             }
-            lookup.setdefault(w, []).append(entry)
-            wu = self._norm(unidecode(w))
-            if wu != w:
-                lookup.setdefault(wu, []).append(entry)
-
+            lookup.setdefault(word, []).append(entry)
+            no_diacritics = self._norm(unidecode(word))
+            if no_diacritics != word:
+                lookup.setdefault(no_diacritics, []).append(entry)
         return lookup
 
-    def _infer_attributes(self, s, emos):
-        """Infer appraisals, intensities, and polarities using ontological relations."""
-        ek = self.EKMAN
-        a, i, p = set(), set(), set()
-
-        def g(res):
-            for o in self.g.objects(res, ek.evokesAppraisal):
-                a.add(self._local(o))
-            for o in self.g.objects(res, ek.hasIntensity):
-                i.add(self._local(o))
-            for o in self.g.objects(res, ek.hasPolarity):
-                p.add(self._local(o))
-
-        g(s)
-        for t in self.g.objects(s, RDF.type):
-            g(t)
-
-        if not p:
-            for e in emos:
-                if e in self.IMPLIED_POLARITY:
-                    p.add(self.IMPLIED_POLARITY[e])
-        if not p:
-            for app in a:
-                if app in self.IMPLIED_POLARITY:
-                    p.add(self.IMPLIED_POLARITY[app])
-
-        return a, i, p
-
     def getvector(self, text, debug=False):
-        """Convert input text into a 24-dimensional continuous ontology vector."""
-        tokens = ViTokenizer.tokenize(str(text).lower()).split()
-        flat = [self._norm(t) for t in tokens if self._norm(t)]
-
+        flat = self._tokens(text)
         ve = np.zeros(7, dtype=np.float32)
         va = np.zeros(9, dtype=np.float32)
         vi = np.zeros(3, dtype=np.float32)
@@ -302,69 +332,58 @@ class OntologyEngine:
 
         idx, n = 0, len(flat)
         hit_trace = []
+        negation_active = False
 
         while idx < n:
-            m, ml = None, 0
-            for l_span in range(min(self.mwe_max_len, n - idx), 0, -1):
-                p = " ".join(flat[idx : idx + l_span])
-                if p in self.lexicon_map:
-                    m, ml = self.lexicon_map[p], l_span
+            matches, match_len = None, 0
+            for span_len in range(min(self.mwe_max_len, n - idx), 0, -1):
+                phrase = " ".join(flat[idx : idx + span_len])
+                if phrase in self.lexicon_map:
+                    matches, match_len = self.lexicon_map[phrase], span_len
                     break
 
-            if not m:
+            if not matches:
                 idx += 1
                 continue
 
+            phrase = " ".join(flat[idx : idx + match_len])
             if debug:
-                hit_trace.append(
-                    {"phrase": " ".join(flat[idx : idx + ml]), "data": m[0]}
-                )
+                hit_trace.append({"phrase": phrase, "data": matches[0]})
 
-            for ent in m:
-                if ent["isnegation"]:
+            for ent in matches:
+                if ent.get("isnegation", False):
                     vn[0] = 1.0
+                    negation_active = True
                     continue
 
-                sc = ent["score"]
-                if vn[0] > 0:
-                    sc *= self.negation_attenuation
+                score = float(ent.get("score", self.default_conf))
+                if negation_active:
+                    score *= self.negation_attenuation
 
-                for e, w in ent["emotions"].items():
+                for e, weight in ent.get("emotions", {}).items():
                     if e in self.ALLEMOTIONS:
-                        ve[self.ALLEMOTIONS.index(e)] += sc * w
-                for x in ent["appraisals"]:
+                        ve[self.ALLEMOTIONS.index(e)] += score * float(weight)
+                for x in ent.get("appraisals", []):
                     if x in self.ALLAPPRAISALS:
-                        va[self.ALLAPPRAISALS.index(x)] += sc
-                for x in ent["intensities"]:
+                        va[self.ALLAPPRAISALS.index(x)] += score
+                for x in ent.get("intensities", []):
                     if x in self.INTENSITY_CLASSES:
                         vi[self.INTENSITY_CLASSES.index(x)] = 1.0
-                for x in ent["polarities"]:
+                for x in ent.get("polarities", []):
                     if x in self.POLARITY_CLASSES:
-                        vp[self.POLARITY_CLASSES.index(x)] += sc
+                        vp[self.POLARITY_CLASSES.index(x)] += score
 
-            idx += ml
+            idx += match_len
 
         if self.alpha_similarity > 0:
-            ve = np.clip(
-                ve + self.alpha_similarity * (ve @ self.sim_matrix), 0, None
-            )
+            ve = np.clip(ve + self.alpha_similarity * (ve @ self.sim_matrix), 0, None)
 
-        fin = np.concatenate([np.tanh(ve), np.tanh(va), vi, vp, vn]).astype(
-            np.float32
-        )
-        return (fin, flat, hit_trace) if debug else fin
+        vector = np.concatenate([np.tanh(ve), np.tanh(va), vi, vp, vn]).astype(np.float32)
+        return (vector, flat, hit_trace) if debug else vector
 
 
-# TODO: VSFCOntologyEngine vs OntologyEngine separation
-# VSFCOntologyEngine is dedicated to 3-class Sentiment Analysis (UIT-VSFC).
-# It performs explicit Polarity Score Injection (mapping emotions -> positive/negative/neutral polarity),
-# applies a 1.5x amplification scaling to polarity, and applies tanh() to vp.
-# In contrast, OntologyEngine is designed for 7-class Emotion Classification without polarity injection.
 class VSFCOntologyEngine(OntologyEngine):
-    """
-    Specialized Ontology Engine for 3-class Sentiment Analysis (UIT-VSFC).
-    Injects polarity scores derived from emotional associations with a 1.5x amplification factor.
-    """
+    """Three-class UIT-VSFC engine preserving original polarity injection behaviour."""
 
     def __init__(
         self,
@@ -373,6 +392,8 @@ class VSFCOntologyEngine(OntologyEngine):
         negation_attenuation=0.4,
         alpha_similarity=0.2,
         verbose=True,
+        language_adapter: Optional[BaseLanguageAdapter] = None,
+        external_lexicon_path: Optional[str] = None,
     ):
         super().__init__(
             rdf_path=rdf_path,
@@ -381,16 +402,14 @@ class VSFCOntologyEngine(OntologyEngine):
             negation_attenuation=negation_attenuation,
             alpha_similarity=alpha_similarity,
             verbose=verbose,
+            language_adapter=language_adapter,
+            external_lexicon_path=external_lexicon_path,
         )
-        # Emotion to Polarity mapping for score injection
         self.POS_EMOTIONS = {"Happiness", "Enjoyment", "Surprise"}
         self.NEG_EMOTIONS = {"Anger", "Disgust", "Fear", "Sadness"}
 
     def getvector(self, text, debug=False):
-        """Extract a 24-dimensional feature vector with sentiment polarity injection."""
-        tokens = ViTokenizer.tokenize(str(text).lower()).split()
-        flat = [self._norm(t) for t in tokens if self._norm(t)]
-
+        flat = self._tokens(text)
         ve = np.zeros(7, dtype=np.float32)
         va = np.zeros(9, dtype=np.float32)
         vi = np.zeros(3, dtype=np.float32)
@@ -399,76 +418,62 @@ class VSFCOntologyEngine(OntologyEngine):
 
         idx, n = 0, len(flat)
         hit_trace = []
+        negation_active = False
 
         while idx < n:
-            m, ml = None, 0
-            for l_span in range(min(self.mwe_max_len, n - idx), 0, -1):
-                p = " ".join(flat[idx : idx + l_span])
-                if p in self.lexicon_map:
-                    m, ml = self.lexicon_map[p], l_span
+            matches, match_len = None, 0
+            for span_len in range(min(self.mwe_max_len, n - idx), 0, -1):
+                phrase = " ".join(flat[idx : idx + span_len])
+                if phrase in self.lexicon_map:
+                    matches, match_len = self.lexicon_map[phrase], span_len
                     break
-
-            if not m:
+            if not matches:
                 idx += 1
                 continue
 
+            phrase = " ".join(flat[idx : idx + match_len])
             if debug:
-                hit_trace.append(
-                    {"phrase": " ".join(flat[idx : idx + ml]), "data": m[0]}
-                )
+                hit_trace.append({"phrase": phrase, "data": matches[0]})
 
-            for ent in m:
-                if ent["isnegation"]:
+            for ent in matches:
+                if ent.get("isnegation", False):
                     vn[0] = 1.0
+                    negation_active = True
                     continue
 
-                sc = ent["score"]
-                if vn[0] > 0:
-                    sc *= self.negation_attenuation
+                score = float(ent.get("score", self.default_conf))
+                if negation_active:
+                    score *= self.negation_attenuation
 
-                current_emos = ent["emotions"]
-                for e, w in current_emos.items():
+                emotions = ent.get("emotions", {})
+                for e, weight in emotions.items():
                     if e in self.ALLEMOTIONS:
-                        ve[self.ALLEMOTIONS.index(e)] += sc * w
+                        ve[self.ALLEMOTIONS.index(e)] += score * float(weight)
 
-                # Polarity score injection
-                pos_score = sum(
-                    w for e, w in current_emos.items() if e in self.POS_EMOTIONS
-                )
+                pos_score = sum(float(w) for e, w in emotions.items() if e in self.POS_EMOTIONS)
+                neg_score = sum(float(w) for e, w in emotions.items() if e in self.NEG_EMOTIONS)
+                neu_score = float(emotions.get("Neutral", 0.0))
                 if pos_score > 0:
-                    vp[0] += sc * pos_score
-
-                neg_score = sum(
-                    w for e, w in current_emos.items() if e in self.NEG_EMOTIONS
-                )
+                    vp[0] += score * pos_score
                 if neg_score > 0:
-                    vp[1] += sc * neg_score
-
-                neu_score = current_emos.get("Neutral", 0.0)
+                    vp[1] += score * neg_score
                 if neu_score > 0:
-                    vp[2] += sc * neu_score
+                    vp[2] += score * neu_score
 
-                for x in ent["polarities"]:
+                for x in ent.get("polarities", []):
                     if x in self.POLARITY_CLASSES:
-                        vp[self.POLARITY_CLASSES.index(x)] += sc
-
-                for x in ent["appraisals"]:
+                        vp[self.POLARITY_CLASSES.index(x)] += score
+                for x in ent.get("appraisals", []):
                     if x in self.ALLAPPRAISALS:
-                        va[self.ALLAPPRAISALS.index(x)] += sc
-
-                for x in ent["intensities"]:
+                        va[self.ALLAPPRAISALS.index(x)] += score
+                for x in ent.get("intensities", []):
                     if x in self.INTENSITY_CLASSES:
                         vi[self.INTENSITY_CLASSES.index(x)] = 1.0
 
-            idx += ml
+            idx += match_len
 
         if self.alpha_similarity > 0:
-            ve = np.clip(
-                ve + self.alpha_similarity * (ve @ self.sim_matrix), 0, None
-            )
-
+            ve = np.clip(ve + self.alpha_similarity * (ve @ self.sim_matrix), 0, None)
         vp *= 1.5
-        fin = np.concatenate(
-            [np.tanh(ve), np.tanh(va), vi, np.tanh(vp), vn]
-        ).astype(np.float32)
-        return (fin, flat, hit_trace) if debug else fin
+        vector = np.concatenate([np.tanh(ve), np.tanh(va), vi, np.tanh(vp), vn]).astype(np.float32)
+        return (vector, flat, hit_trace) if debug else vector

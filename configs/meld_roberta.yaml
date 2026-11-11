@@ -1,0 +1,49 @@
+experiment:
+  name: "IJMLC-English-MELD-OntologyV2-RoBERTa"
+  output_dir: "results/english/meld_ontology_v2"
+  models:
+    - baseline
+    - nrcflat
+    - rawgate_zero
+    - rawgate_shuffled
+    - rawgate
+  seeds: [0, 42, 123, 1234, 2025]
+
+dataset:
+  name: "MELD"
+  data_dir: "data/english/meld"
+  classes:
+    - Anger
+    - Disgust
+    - Fear
+    - Happiness
+    - Neutral
+    - Sadness
+    - Surprise
+
+model:
+  backbone: "roberta-base"
+  dense_dim: 64
+  text_dropout: 0.3
+  ontology_dropout: 0.1
+
+ontology:
+  rdf_path: "ontology/ekman_appraisal_ontology_v2.rdf"
+  external_lexicon_path: "ontology/english_nrc_ontology_v2_structured.json"
+  flat_lexicon_path: "ontology/english_nrc_flat7.json"
+  default_conf: 0.50
+  negation_attenuation: 0.50
+  alpha_similarity: 0.20
+  appraisal_inference: "from explicit ontology-v2 stimulus relations"
+  infer_intensity_from_emotion: false
+
+training:
+  batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  epochs: 15
+  patience: 3
+  max_len: 128
+  gradient_clip: 1.0
+  fp16: true
+  num_workers: 2

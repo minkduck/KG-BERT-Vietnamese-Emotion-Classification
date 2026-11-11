@@ -1,0 +1,114 @@
+{
+  "nrc_source_file": "NRC-Emotion-Lexicon-Wordlevel-v0.92.txt",
+  "ontology_file": "ekman_appraisal_ontology_v2.rdf",
+  "ontology_triples": 92150,
+  "confidence": 0.5,
+  "classes": [
+    "Anger",
+    "Disgust",
+    "Fear",
+    "Happiness",
+    "Neutral",
+    "Sadness",
+    "Surprise"
+  ],
+  "structured_keys": 5989,
+  "flat_emotion_keys": 3453,
+  "appraisal_enriched_keys": 3452,
+  "negation_cues": [
+    "not",
+    "no",
+    "never",
+    "without",
+    "neither",
+    "nor",
+    "hardly",
+    "scarcely",
+    "barely"
+  ],
+  "curation_file": null,
+  "ontology_semantics": {
+    "Anger": {
+      "appraisals": [
+        "GoalObstructionAppraisal",
+        "UnfairnessAppraisal"
+      ],
+      "polarities": [
+        "NegativePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Anger",
+        "Stimulus_BG_Anger"
+      ]
+    },
+    "Disgust": {
+      "appraisals": [
+        "UnpleasantnessAppraisal"
+      ],
+      "polarities": [
+        "NegativePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Disgust",
+        "Stimulus_BG_Disgust"
+      ]
+    },
+    "Fear": {
+      "appraisals": [
+        "DangerousnessAppraisal",
+        "LowPredictabilityAppraisal"
+      ],
+      "polarities": [
+        "NegativePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Fear",
+        "Stimulus_BG_Fear"
+      ]
+    },
+    "Happiness": {
+      "appraisals": [
+        "PleasantnessAppraisal"
+      ],
+      "polarities": [
+        "PositivePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Happiness",
+        "Stimulus_BG_Happiness"
+      ]
+    },
+    "Neutral": {
+      "appraisals": [],
+      "polarities": [],
+      "evidence_stimuli": []
+    },
+    "Sadness": {
+      "appraisals": [
+        "LossAppraisal",
+        "UnpleasantnessAppraisal"
+      ],
+      "polarities": [
+        "NegativePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Sadness",
+        "Stimulus_BG_Sadness"
+      ]
+    },
+    "Surprise": {
+      "appraisals": [
+        "SuddennessAppraisal",
+        "UnpredictabilityAppraisal"
+      ],
+      "polarities": [
+        "PositivePolarity"
+      ],
+      "evidence_stimuli": [
+        "EnglishStimulus_Surprise",
+        "Stimulus_BG_Surprise"
+      ]
+    }
+  },
+  "note": "Emotion/polarity evidence originates from NRC. Appraisal slots are inferred only from explicit ontology-v2 relations. Intensity is deliberately not inferred without lexical intensity evidence."
+}

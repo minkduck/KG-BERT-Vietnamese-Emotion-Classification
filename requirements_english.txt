@@ -1,0 +1,7 @@
+# Install in addition to the repository dependencies.
+scipy>=1.10.0
+accelerate>=0.27.0
+shap>=0.45.0
+lime>=0.2.0.1
+datasets>=3.0,<5
+packaging>=23.0
